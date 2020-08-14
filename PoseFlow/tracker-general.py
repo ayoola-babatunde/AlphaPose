@@ -137,7 +137,6 @@ if __name__ == '__main__':
     num_persons = 0
 
     # load json file without tracking information
-    print("Start loading json file...\n")
     with open(notrack_json,'r') as f:
         notrack = json.load(f)
         for img_name in tqdm(sorted(notrack.keys())):
