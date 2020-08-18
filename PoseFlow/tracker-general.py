@@ -26,24 +26,50 @@ from matching import orb_matching
 import argparse
 
 # visualization
+import matplotlib.patheffects as PathEffects
 def display_pose(imgdir, visdir, tracked, cmap):
-
+ 
     print("Start visualization...\n")
     for imgname in tqdm(tracked.keys()):
         img = Image.open(os.path.join(imgdir,imgname))
         width, height = img.size
         fig = plt.figure(figsize=(width/10,height/10),dpi=10)
         plt.imshow(img)
+ 
+		#This just put the image name in the corner and the image name had the frame number in it.
+        txt1 = plt.text(0, 20, imgname, size=100, color='black')
+        txt1.set_path_effects([PathEffects.withStroke(linewidth=25, foreground='w')])
+ 
         for pid in range(len(tracked[imgname])):
             pose = np.array(tracked[imgname][pid]['keypoints']).reshape(-1,3)[:,:3]
             tracked_id = tracked[imgname][pid]['idx']
 
+			#This part gets the label.
+            #mapping_id = tracked[imgname][pid]['mapping_id'] + ":" + str(tracked[imgname][pid]['idx'])
+            mapping_id = np.random.randint(1,100)
+            #if 'Unnamed' in mapping_id:
+            #    mapping_id = mapping_id.replace('Unnamed:','').strip()
+ 
+			#Then I put the label on the image using what I think is the coordinates of the player's ear.
+            txt2 = plt.text(pose[0][0], pose[0][1], mapping_id, size=100, color='black')
+            txt2.set_path_effects([PathEffects.withStroke(linewidth=25, foreground='w')])
+ 
+			#I believe this displays the confidence interval for the center-of-mass (COM) calculation as well as plots the COM.
+			#The COM of mass is red when it's not estimated.
+            if('com' in tracked[imgname][pid]):
+                txt3 = plt.text(tracked[imgname][pid]['com'][0],tracked[imgname][pid]['com'][1], round(tracked[imgname][pid]['com_c'],2), size=50, color='black')
+                txt3.set_path_effects([PathEffects.withStroke(linewidth=25, foreground='w')])
+                #print(tracked[imgname][pid]['com'])
+                if('com_e' in tracked[imgname][pid]):
+                    plt.plot(tracked[imgname][pid]['com'][0],tracked[imgname][pid]['com'][1], marker='o', markersize=100, color='blue')
+                else:
+                    plt.plot(tracked[imgname][pid]['com'][0],tracked[imgname][pid]['com'][1], marker='o', markersize=100, color='red')
             # keypoint scores of torch version and pytorch version are different
             if np.mean(pose[:,2]) <1 :
                 alpha_ratio = 1.0
             else:
                 alpha_ratio = 5.0
-
+ 
             if pose.shape[0] == 16:
                 mpii_part_names = ['RAnkle','RKnee','RHip','LHip','LKnee','LAnkle','Pelv','Thrx','Neck','Head','RWrist','RElbow','RShoulder','LShoulder','LElbow','LWrist']
                 colors = ['m', 'b', 'b', 'r', 'r', 'b', 'b', 'r', 'r', 'm', 'm', 'm', 'r', 'r','b','b']
@@ -65,12 +91,14 @@ def display_pose(imgdir, visdir, tracked, cmap):
                     plt.plot(np.clip(pose[pairs[idx],0],0,width),np.clip(pose[pairs[idx],1],0,height),'r-',
                             color=cmap(tracked_id), linewidth=60/alpha_ratio*np.mean(pose[pairs[idx],2]), alpha=0.6/alpha_ratio*np.mean(pose[pairs[idx],2]))
         plt.axis('off')
+ 
         ax = plt.gca()
         ax.set_xlim([0,width])
         ax.set_ylim([height,0])
         extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
         if not os.path.exists(visdir): 
             os.mkdir(visdir)
+		#This was the output directory I was using.
         fig.savefig(os.path.join(visdir,imgname.split()[0]+".png"), pad_inches = 0.0, bbox_inches=extent, dpi=13)
         plt.close()
 
