@@ -46,7 +46,7 @@ def display_pose(imgdir, visdir, tracked, cmap):
 
 			#This part gets the label.
             #mapping_id = tracked[imgname][pid]['mapping_id'] + ":" + str(tracked[imgname][pid]['idx'])
-            mapping_id = np.random.randint(1,100)
+            mapping_id = tracked_id
             #if 'Unnamed' in mapping_id:
             #    mapping_id = mapping_id.replace('Unnamed:','').strip()
  
